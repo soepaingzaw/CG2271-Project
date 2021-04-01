@@ -16,13 +16,29 @@
 #define GREEN_LED 19 // PortB Pin 19
 #define BLUE_LED 1 // PortD Pin 1
 
-#define LED_RED 2
+#define LED_RED 3
 #define LED_MASK(x) (x&0x06)
 #define BIT0_MASK(x) (x&0x01)
-#define MOTOR_MASK(x) (x&0x8)
-#define DIRECTION_MASK(x) (x&0x4)
-#define F_B_MASK(x) (x&0x2)
-#define L_R_MASK(x) (x&0x2)
+
+#define RED_LED_MASK(x) (x&0x03)
+
+#define RED_LED_OFF 2
+#define MOTOR_MASK(x) (x&0x08)
+#define DIRECTION_MASK(x) (x&0x04)
+
+#define FW_MASK(x) (x&0x0b)
+#define RV_MASK(x) (x&0x09)
+#define LT_MASK(x) (x&0x0d)
+#define RT_MASK(x) (x&0x0f)
+
+#define MODE_MASK(x) (x&0xF0)
+#define STATE_MASK(x) ((x&0x0E)>> 1)
+#define ENABLE_MASK(x) (x&0x01)
+
+#define FW 11
+#define RV 9
+#define LT 13
+#define RT 15
 
 volatile uint8_t rx_data = 0x01;
 
@@ -203,9 +219,11 @@ void forward(void) {
 	
 	TPM1_C1V = 375000/2;
 	TPM2_C0V = 375000/2;//added code
-
+	
 	TPM1_C0V = 0;//added code
 	TPM2_C1V = 0;
+
+
 
 	delay(0x200000);
 	
@@ -219,12 +237,14 @@ void forward(void) {
 
 void backward(void) {
 	TPM1->MOD = 375000;
-	TPM1_C1V = 0;
-	TPM1_C0V = 375000/2;//added code
-	
 	TPM2->MOD = 375000;
+	
+
+	TPM1_C0V = 375000/2;//added code
 	TPM2_C1V = 375000/2;
+	
 	TPM2_C0V = 0;//added code
+	TPM1_C1V = 0;
 	
 	delay(0x200000);
 	
@@ -237,14 +257,16 @@ void backward(void) {
 }
 
 void left(void) {
-	TPM1->MOD = 375000;
+	TPM1->MOD = 375000;		
 	TPM2->MOD = 375000;
 	
 	TPM1_C1V = 375000/4;
 	TPM2_C0V = 375000/2;//added code
-
+	
 	TPM1_C0V = 0;//added code
 	TPM2_C1V = 0;
+
+
 
 	delay(0x200000);
 	
@@ -261,11 +283,11 @@ void right(void) {
 	
 	TPM1->MOD = 375000;
 	TPM2->MOD = 375000;
-	
+		
 	TPM1_C1V = 375000/2;
 	TPM2_C0V = 375000/4;//added code
-
-	TPM1_C0V = 0;//
+	
+	TPM1_C0V = 0;
 	TPM2_C1V = 0;
 
 	delay(0x200000);
@@ -296,50 +318,52 @@ int main(void){
 	initUART2(BAUD_RATE);
 	initGPIO();
 	initPWM();
+	offMotors();
 	offLED();
 	while(1){
-		/* RX and TX*/
-		//UART2_Transmit_Poll(rx_data);
-		//rx_data = UART2_Receive_Poll();
-		
-		if(LED_MASK(rx_data)==LED_RED){
 
-			if(BIT0_MASK(rx_data))
-				led_control(led_colours[0][1]);
-			else
-				offLED();
 		
-		}
+		if(ENABLE_MASK(rx_data)){
+				//MOTOR MODE
+				if(MODE_MASK(rx_data)){
+					
 		
-		else if(MOTOR_MASK(rx_data)) {
-			
-			if(BIT0_MASK(rx_data)){
-				
-				if(DIRECTION_MASK(rx_data)==0) {
-					if(F_B_MASK(rx_data)) {
+					switch(STATE_MASK(rx_data)){
+						case 0:
 							forward();
-					}
-					else {
+							break;
+						case 1:
 							backward();
-					}
-				}
-				else if (DIRECTION_MASK(rx_data)==1) {
-					if(L_R_MASK(rx_data)){
-						left();
-					}
-					else {
+							break;
+						case 2:
+							left();
+							break;
+						case 3:
 							right();
+							break;
+						default:
+							offMotors();
+					}
+					
+					
+					}
+				
+				
+				//LED mode
+				else {
+					
+					if(MODE_MASK(rx_data) == 0) {
+						led_control(led_colours[0][1]);
 					}
 				}
-				
-			}
-			else {
-				offMotors();
-			}
+			
 		}
-	
-		
-		else
+		else {
+			offMotors();
 			offLED();
+		}
+		
+
+	
 	}
 }
