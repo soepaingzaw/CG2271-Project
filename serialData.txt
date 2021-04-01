@@ -1,0 +1,6 @@
+red: 0x01-> may need to change
+forward: 0x11
+reverse: 0x13
+left curve: 0x15
+right curve: 0x17
+off motor: 0x10
