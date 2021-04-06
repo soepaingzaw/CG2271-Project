@@ -1,6 +1,20 @@
-red: 0x01-> may need to change
-forward: 0x11
-reverse: 0x13
-left curve: 0x15
-right curve: 0x17
-off motor: 0x10
+
+
+Thread      |hex        |Binary      |decimal     |comments
+red led:     0x01        0000 0001    1            -> may need to change
+
+forward:     0x11        0001 0001    17
+reverse:     0x13        0001 0011    19
+left curve:  0x15        0001 0101    21
+right curve: 0x17	 0001 0111    23
+off motor:   0x10        0001 0000    16
+
+//YET TO IMPLEMENT
+
+sharp left   0x          0001 1001    25
+sharp right  0x          0001 1011    26
+left rcurve  0x          0001 1101    27
+right rcurve 0x          0001 1111    28
+
+green led    0x03        0000 0011     3
+
