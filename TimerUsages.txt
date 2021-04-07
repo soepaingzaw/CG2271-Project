@@ -1,5 +1,12 @@
+Motors
+
 TPM1C0 LEFT
 TPM1C1 LEFT
 TPM2C0 RIGHT 
 TPM2C1 RIGHT
+
+Buzzer
+
+TPM0C0 Buzzer
+
 
