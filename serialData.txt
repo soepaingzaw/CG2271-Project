@@ -9,13 +9,15 @@ left curve:  0x15        0001 0101    21
 right curve: 0x17	 0001 0111    23
 off motor:   0x10        0001 0000    16
 
-bluetooth    0x40        0010 0001    33
+bluetooth    0x21        0010 0001    33
+ending       0x23        0010 0011    35
+
 //YET TO IMPLEMENT
 
-sharp left   0x          0001 1001    25
-sharp right  0x          0001 1011    26
-left rcurve  0x          0001 1101    27
-right rcurve 0x          0001 1111    28
+sharp left   0x1          0001 1001    25
+sharp right  0x1          0001 1011    27
+left rcurve  0x1          0001 1101    27
+right rcurve 0x1         0001 1111    28
 
 green led    0x03        0000 0011     3
 

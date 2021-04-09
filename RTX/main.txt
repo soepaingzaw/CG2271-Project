@@ -136,7 +136,7 @@ void UART2_IRQHandler(void) {
 			audioFlag = 1;
 		}
 		//if press right curve stop music
-		if(rx_data == 0x17) {
+		if(rx_data == 0x23) {
 			
 			audioFlag = 0;
 			finishRun();
@@ -161,6 +161,41 @@ void PORTD_IRQHandler() {
 	
 }
 
+void tMotorControl() {
+	
+	uint8_t rx_m;	
+	
+	for(;;) {
+		osMessageQueueGet(motorQ,&rx_m,NULL,osWaitForever);
+		if(rx_m==0x11){
+			forward();
+		}
+		else if(rx_m==0x13){
+			backward();
+		}
+		else if(rx_m==0x15) {
+			left();
+		}
+		else if(rx_m==0x17) {
+		
+			right();
+		}
+		else if(rx_m==0x1B) {
+		
+			sharpRight();
+		}
+		else if(rx_m==0x19) {
+		
+			sharpLeft();
+		}
+		
+		else if(rx_m==0x10) {
+			offMotors();
+		}
+		
+	}
+	
+}
 
 
 void greenThread() {
@@ -243,7 +278,7 @@ void tBrain(void *argument) {
 	
   for(;;) {
 		//osMessageQueueGet(audioQ,&rx_b,NULL,osWaitForever);
-		//osMessageQueuePut(motorQ, &rx_b, NULL, 0);
+		  osMessageQueuePut(motorQ, &rx_data, NULL, 0);
 		//osMessageQueuePut(redQ, &rx_b, NULL, 0); 
 		//osDelay(10);
 		  osMessageQueuePut(greenQ, &rx_data, NULL, 0); 
@@ -261,12 +296,17 @@ int main (void) {
  
     SystemCoreClockUpdate();
 	
-		
+		//correct code for bluetooth and audio
 	  initClockGate();
 	  initUART2(BAUD_RATE);
 	  initAudio();
 	  initPWM();
 		initLED();
+	
+		//integrating motors
+	  initMotorGPIO();
+	  initMotorPWM();
+	
 		//initSwitch();
 
 		offRGB();
@@ -294,8 +334,8 @@ int main (void) {
 		
 		
 		
-	//	osThreadNew(tMotorControl, NULL, NULL);
-	  //motorQ = osMessageQueueNew(MSG_COUNT, sizeof(uint8_t), NULL);
+		osThreadNew(tMotorControl, NULL, NULL);
+	  motorQ = osMessageQueueNew(MSG_COUNT, sizeof(uint8_t), NULL);
 	
 	
 	
