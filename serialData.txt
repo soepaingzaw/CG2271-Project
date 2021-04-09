@@ -9,6 +9,7 @@ left curve:  0x15        0001 0101    21
 right curve: 0x17	 0001 0111    23
 off motor:   0x10        0001 0000    16
 
+bluetooth    0x40        0010 0001    33
 //YET TO IMPLEMENT
 
 sharp left   0x          0001 1001    25
