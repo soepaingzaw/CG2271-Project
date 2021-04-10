@@ -1,4 +1,4 @@
-
+press end challebeg to play end music 
 
 Thread      |hex        |Binary      |decimal     |comments
 red led:     0x01        0000 0001    1            -> may need to change
@@ -8,16 +8,17 @@ reverse:     0x13        0001 0011    19
 left curve:  0x15        0001 0101    21
 right curve: 0x17	 0001 0111    23
 off motor:   0x10        0001 0000    16
+sharp left   0x19        0001 1001    25
+sharp right  0x1B        0001 1011    27
 
 bluetooth    0x21        0010 0001    33
 ending       0x23        0010 0011    35
 
 //YET TO IMPLEMENT
 
-sharp left   0x1          0001 1001    25
-sharp right  0x1          0001 1011    27
-left rcurve  0x1          0001 1101    27
-right rcurve 0x1         0001 1111    28
+
+left rcurve  0x1D         0001 1101    29
+right rcurve 0x1F         0001 1111    31
 
 green led    0x03        0000 0011     3
 

@@ -29,21 +29,28 @@
 	PORTD->PCR[RED_LED] |= PORT_PCR_MUX(1);
 	PTD->PDDR |= MASK(RED_LED);
 	 
+	 
+	 
 	PORTA->PCR[GREEN_LEDA] &= ~PORT_PCR_MUX_MASK;
 	PORTA->PCR[GREEN_LEDA] |= PORT_PCR_MUX(1);
 	PTA->PDDR |= MASK(GREEN_LEDA);
+	 
 	PORTA->PCR[GREEN_LEDB] &= ~PORT_PCR_MUX_MASK;
 	PORTA->PCR[GREEN_LEDB] |= PORT_PCR_MUX(1);
 	PTA->PDDR |= MASK(GREEN_LEDB);
+	 
 	PORTD->PCR[GREEN_LEDC] &= ~PORT_PCR_MUX_MASK;
 	PORTD->PCR[GREEN_LEDC] |= PORT_PCR_MUX(1);
 	 PTD->PDDR |= MASK(GREEN_LEDC);
+	 
 	PORTA->PCR[GREEN_LEDD] &= ~PORT_PCR_MUX_MASK;
 	PORTA->PCR[GREEN_LEDD] |= PORT_PCR_MUX(1);
 	PTA->PDDR |= MASK(GREEN_LEDD);
+	
 	PORTA->PCR[GREEN_LEDE] &= ~PORT_PCR_MUX_MASK;
 	PORTA->PCR[GREEN_LEDE] |= PORT_PCR_MUX(1);
 	PTA->PDDR |= MASK(GREEN_LEDE);
+	
 	PORTA->PCR[GREEN_LEDF] &= ~PORT_PCR_MUX_MASK;
 	PORTA->PCR[GREEN_LEDF] |= PORT_PCR_MUX(1);
 	PTA->PDDR |= MASK(GREEN_LEDF);
@@ -51,12 +58,15 @@
 	PORTC->PCR[GREEN_LEDG] &= ~PORT_PCR_MUX_MASK;
 	PORTC->PCR[GREEN_LEDG] |= PORT_PCR_MUX(1);
 	PTC->PDDR |= MASK(GREEN_LEDG);
+	
 	PORTC->PCR[GREEN_LEDH] &= ~PORT_PCR_MUX_MASK;
 	PORTC->PCR[GREEN_LEDH] |= PORT_PCR_MUX(1);
 	PTC->PDDR |= MASK(GREEN_LEDH);
+	
 	PORTC->PCR[GREEN_LEDI] &= ~PORT_PCR_MUX_MASK;
 	PORTC->PCR[GREEN_LEDI] |= PORT_PCR_MUX(1);
 	PTC->PDDR |= MASK(GREEN_LEDI);
+	
 	PORTC->PCR[GREEN_LEDJ] &= ~PORT_PCR_MUX_MASK;
 	PORTC->PCR[GREEN_LEDJ] |= PORT_PCR_MUX(1);
 	PTC->PDDR |= MASK(GREEN_LEDJ);
@@ -88,12 +98,8 @@ void offGreen(void) {
 	PTC->PCOR |= MASK(GREEN_LEDJ);
 }
 
-void green_led (void *argument) {
- 
-  // ...
-  for (;;) {
-		if (moving == 1) {
-			offGreen();
+
+void movingGreen(void) {
 			PTA->PSOR |= MASK(GREEN_LEDA);
 			osDelay(GREEN_DELAY);
 			PTA->PCOR |= MASK(GREEN_LEDA);
@@ -123,28 +129,31 @@ void green_led (void *argument) {
 			PTC->PCOR |= MASK(GREEN_LEDI);
 			PTC->PSOR |= MASK(GREEN_LEDJ);
 			osDelay(GREEN_DELAY);
-		} else {
-			onGreen();
-			osDelay(GREEN_DELAY);
-			onGreen();
-			osDelay(GREEN_DELAY);
-		}
-	}
+	
 }
 
-void red_led (void *argument) {
-	
-	for (;;) {
-		if (moving == 1) {
-			PTD->PSOR |= MASK(RED_LED);
-			osDelay(RED_MOVE_DELAY);
-			PTD->PCOR |= MASK(RED_LED);
-			osDelay(RED_MOVE_DELAY);
-		} else {
-			PTD->PSOR |= MASK(RED_LED);
-			osDelay(RED_STOP_DELAY);
-			PTD->PCOR |= MASK(RED_LED);
-			osDelay(RED_STOP_DELAY);
-		}
-	}
+void greenLEDBluetoothOn(void){
+    	onGreen();
+	    osDelay(250);
+			offGreen();
+			osDelay(250);	
+	  
 }
+
+void movingRed(void){
+			PTD->PSOR |= MASK(RED_LED);
+			osDelay(RED_MOVE_DELAY);
+			PTD->PCOR |= MASK(RED_LED);
+			osDelay(RED_MOVE_DELAY);
+
+}
+
+void stationaryRed(void){
+			PTD->PSOR |= MASK(RED_LED);
+			osDelay(RED_STOP_DELAY);
+			PTD->PCOR |= MASK(RED_LED);
+			osDelay(RED_STOP_DELAY);
+	
+}
+
+

@@ -56,17 +56,8 @@ void initPWM(void) {
 	TPM0_C0V = 0;	
 }
 
-/*
-void delay(volatile uint32_t nof) {
-		while (nof!=0) {
-	
-			nof--;
-		}
-		//delay(0x200000);//1 second delay
-}
-*/
 
-void maryHadALittleLamb(void) {
+void maryHadALittleLamb(volatile int audioFlag) {
 	
 	    int temp=375000;
 	
@@ -75,14 +66,16 @@ void maryHadALittleLamb(void) {
 											330,294,262,294,330,330,330,  
 											0,294,294,330,294,262,0};	
 	
-			for(int i=0;i<NUM_NOTES;i++) {
+			for(int i=0;i<NUM_NOTES && audioFlag;i++) {
 	
 			TPM0->MOD = temp/mary[i];
 			TPM0_C0V = (temp/(mary[i]))/2;
 			delay(0x80000);
+			osDelay(50);
 			//delay(0x100000);
 			TPM0->MOD = 0;
 			TPM0_C0V = 0;		
+			osDelay(50);
 			//delay(0x100000);
 			delay(0x80000);
 
@@ -121,7 +114,8 @@ void finishRun(void) {
 			TPM0->MOD = 0;
 			TPM0_C0V = 0;		
 			delay(0x100000);
-			//delay(0x80000);
+			
 					
 	}
+	delay(0xFFFFFFFF);
 }

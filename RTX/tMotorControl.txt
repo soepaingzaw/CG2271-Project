@@ -54,7 +54,8 @@
 
 #define MODE_MASK(x) (x&0xF0)
 #define STATE_MASK(x) ((x&0x0E)>> 1)
-#define ENABLE_MASK(x) (x&0x01)
+
+
 
 #define FW 11
 #define RV 9
@@ -224,50 +225,87 @@ void forward(void) {
 	TPM1->MOD = 375000;
 	TPM2->MOD = 375000;
 	
-	TPM1_C1V = 375000/2;
-	TPM2_C0V = 375000/2;//added code
+
+	TPM1_C0V = 375000;//added code
+	TPM2_C1V = 375000;
+	
+	TPM2_C0V = 0;//added code
+	TPM1_C1V = 0;
+	
+	osDelay(100);
+
+}
+
+void backward(void) {
+
+
+	TPM1->MOD = 375000;
+	TPM2->MOD = 375000;
+	
+	TPM1_C1V = 375000;
+	TPM2_C0V = 375000; //added code
 	
 	TPM1_C0V = 0;//added code
 	TPM2_C1V = 0;
 
 
-
-	delay(0x200000);
-	
-	TPM1->MOD = 0;
-	TPM2->MOD = 0;
-	
-	TPM1_C1V = 0;
-	TPM2_C0V = 0;
-	
-}
-
-void backward(void) {
-	TPM1->MOD = 375000;
-	TPM2->MOD = 375000;
-	
-
-	TPM1_C0V = 375000/2;//added code
-	TPM2_C1V = 375000/2;
-	
-	TPM2_C0V = 0;//added code
-	TPM1_C1V = 0;
-	
-	delay(0x200000);
-	
-	TPM1->MOD = 0;
-	TPM2->MOD = 0;
-	
-	TPM1_C0V = 0;
-	TPM2_C1V = 0;
+  osDelay(100);
 	
 }
 
 void left(void) {
+	TPM1->MOD = 375000;
+	TPM2->MOD = 375000;
+		
+	TPM1_C1V = 0;
+	TPM2_C0V = 0;//added code
+	
+	TPM1_C0V = 375000;
+	TPM2_C1V = 0;
+
+	osDelay(100);
+
+	
+}
+
+void right(void) {
 	TPM1->MOD = 375000;		
 	TPM2->MOD = 375000;
 	
-	TPM1_C1V = 375000/4;
+	TPM1_C1V = 0;
+	TPM2_C0V = 0;//added code
+	
+	TPM1_C0V = 0;//added code
+	TPM2_C1V = 375000;
+
+
+
+	osDelay(100);
+
+
+	
+}
+
+void leftReverse(void){
+	TPM1->MOD = 375000;
+	TPM2->MOD = 375000;
+		
+	TPM1_C1V = 375000;
+	TPM2_C0V = 0;//added code
+	
+	TPM1_C0V = 0;
+	TPM2_C1V = 0;
+
+	osDelay(100);
+	
+}
+
+void rightReverse(void){
+	
+	TPM1->MOD = 375000;		
+	TPM2->MOD = 375000;
+	
+	TPM1_C1V = 0;
 	TPM2_C0V = 375000;//added code
 	
 	TPM1_C0V = 0;//added code
@@ -275,36 +313,7 @@ void left(void) {
 
 
 
-	delay(0x200000);
-	
-	TPM1->MOD = 0;
-	TPM2->MOD = 0;
-	
-	TPM1_C1V = 0;
-	TPM2_C0V = 0;
-	
-	
-}
-
-void right(void) {
-	
-	TPM1->MOD = 375000;
-	TPM2->MOD = 375000;
-		
-	TPM1_C1V = 375000;
-	TPM2_C0V = 375000/4;//added code
-	
-	TPM1_C0V = 0;
-	TPM2_C1V = 0;
-
-	delay(0x200000);
-	
-	TPM1->MOD = 0;
-	TPM2->MOD = 0;
-	
-	TPM1_C1V = 0;
-	TPM2_C0V = 0;
-	
+	osDelay(100);
 	
 }
 
@@ -318,15 +327,15 @@ void sharpLeft(){
 		TPM1_C0V = 375000/2;
 		TPM2_C1V = 0;//NO CHANGE
 
-		delay(0x80000);
-		
+		osDelay(100);
+		/*
 		TPM1->MOD = 0;
 		TPM2->MOD = 0;
 		
 		TPM1_C0V = 0;
 		TPM2_C0V = 0;
 
-
+		*/
 }
 
 void sharpRight() {
@@ -338,14 +347,15 @@ void sharpRight() {
 	
 	TPM1_C0V = 0;//no chnage
 	TPM2_C1V = 375000/4;
-	delay(0x80000);
 	
+	osDelay(100);
+	/*
 	TPM1->MOD = 0;
 	TPM2->MOD = 0;
 	
 	TPM1_C1V = 0;
 	TPM2_C1V = 0;
-
+	*/
 
 }
 
@@ -353,8 +363,11 @@ void offMotors(void) {
 	TPM1->MOD = 0;
 	TPM2->MOD = 0;
 	
+	
+	TPM1_C0V = 0;
 	TPM1_C1V = 0;
 	TPM2_C0V = 0;
+	TPM2_C1V = 0;
 }
 
 
@@ -362,82 +375,5 @@ void offMotors(void) {
 
 
 
-
-
-
-
-
-
-
-
-
-
-/* MAIN FUNCTION */
-
-
-
-/*
-
-
-
-
-int main(void){
-	
-	SystemCoreClockUpdate();
-	initUART2(BAUD_RATE);
-	initGPIO();
-	initPWM();
-	offMotors();
-	offLED();
-	while(1){
-
-		
-		if(ENABLE_MASK(rx_data)){
-				//MOTOR MODE
-				if(MODE_MASK(rx_data)){
-					
-		
-					switch(STATE_MASK(rx_data)){
-						case 0:
-							forward();
-							break;
-						case 1:
-							backward();
-							break;
-						case 2:
-							left();
-							break;
-						case 3:
-							right();
-							break;
-						default:
-							offMotors();
-					}
-					
-					
-					}
-				
-				
-				//LED mode
-				else {
-					
-					if(MODE_MASK(rx_data) == 0) {
-						led_control(led_colours[0][1]);
-					}
-				}
-			
-		}
-		else {
-			offMotors();
-			offLED();
-		}
-		
-
-	
-	}
-}
-
-
-*/
 
 

@@ -17,6 +17,10 @@
 
 #define MSG_COUNT 1
 
+#define MOTORONMASK(x) (x&0x01)
+#define MOTOR_MODE_MASK(x) (x&0x10)
+#define ENABLE_MASK(x) (x&0x01)
+
 osThreadId_t t_Brain, t_Audio , red_Thread,green_Thread, t_MotorControl; 
 
 osMessageQueueId_t audioQ,brainQ,redQ,greenQ,motorQ;
@@ -25,7 +29,7 @@ osEventFlagsId_t led_flag;
 
 volatile uint8_t rx_data = 0x00;
 
-int audioFlag = 0;
+volatile int audioFlag = 0;
 
 typedef struct {
 	uint8_t cmd;
@@ -131,11 +135,13 @@ void UART2_IRQHandler(void) {
 		
 		
 		if(rx_data == 0x21){
+			//greenOn();
 			//osMessageQueuePut(audioQ, &rx_data, NULL, 0);
 			bluetoothConnected();
 			audioFlag = 1;
 		}
-		//if press right curve stop music
+		//press end challenge to play end music
+		//end stop playing song
 		if(rx_data == 0x23) {
 			
 			audioFlag = 0;
@@ -188,6 +194,14 @@ void tMotorControl() {
 		
 			sharpLeft();
 		}
+		else if(rx_m==0x1D){
+			leftReverse();
+		}
+		else if(rx_m==0x1F){
+				rightReverse();
+		}
+		
+
 		
 		else if(rx_m==0x10) {
 			offMotors();
@@ -205,37 +219,51 @@ void greenThread() {
 		
 		osMessageQueueGet(greenQ,&rx_g,NULL,osWaitForever);
 		if(rx_g==0x21){
+			greenLEDBluetoothOn();
+			rx_data=0x10;
+		}
+		//else if(MOTOR_MODE_MASK(rx_g)){
+		else if(ENABLE_MASK(rx_g)){
+				offGreen();
+				movingGreen();
+			
+			//}
+
+		}
+		else{
 			onGreen();
-			osDelay(500);
-			offGreen();
-			osDelay(500);
-			rx_data=0x00;
+		
 		}
-		else {
-			offGreen();
-		}
+		
 	}
 	
-	
 }
-/*
+
+
 void redThread() {
-	uint8_t rx_r = rx_data;	
+	uint8_t rx_r;	
 	
 	for(;;) {
 		
-		osMessageQueueGet(greenQ,&rx_r,NULL,osWaitForever);
-		if(rx_r==0x21){
-			onGreen();
-			osDelay(500);
-			offGreen();
-			osDelay(500);
+		osMessageQueueGet(redQ,&rx_r,NULL,osWaitForever);
+
+		//if(MOTOR_MODE_MASK(rx_r)){
+		if(ENABLE_MASK(rx_r)){
+			
+				movingRed();
+			
+			//}
+
+		}
+		else{
+			stationaryRed();
+		
 		}
 	}
 	
 	
 }
-*/
+
 
 void tAudio() {
 	
@@ -246,24 +274,14 @@ void tAudio() {
 	
 	for(;;){
 		osMessageQueueGet(audioQ,&rx_a,NULL,osWaitForever);
-		/*
-		if(rx_a==0x11) {
-			bluetoothConnected();
-			rx_a=0x25;
-			osMessageQueuePut(audioQ, &rx_a, NULL, 0);	
-		}
-		else if(rx_a==0x13) {
-			audioFlag=0;
-			finishRun();
-		}
-		*/
+
 		if(audioFlag){
 			//1 second delay before song starts
 			if(internalFlag) {
 				osDelay(2000);
 				internalFlag=0;
 			}
-			maryHadALittleLamb();
+			maryHadALittleLamb(audioFlag);
 		}
 		
 		
@@ -273,22 +291,13 @@ void tAudio() {
 
 void tBrain(void *argument) {
 	
-	//uint8_t rx_b = rx_data;
-	//uint8_t rx_b = 0x00;
-	
   for(;;) {
-		//osMessageQueueGet(audioQ,&rx_b,NULL,osWaitForever);
 		  osMessageQueuePut(motorQ, &rx_data, NULL, 0);
-		//osMessageQueuePut(redQ, &rx_b, NULL, 0); 
-		//osDelay(10);
+		  osMessageQueuePut(redQ, &rx_data, NULL, 0); 	
 		  osMessageQueuePut(greenQ, &rx_data, NULL, 0); 
-		//osDelay(10);
-	
 			osMessageQueuePut(audioQ, &rx_data, NULL, 0);	
-		  osDelay(100);
+		  osDelay(10);
 	}			
-	
-
 }
 
 
@@ -314,21 +323,16 @@ int main (void) {
     osKernelInitialize();   
 
 	
-
-	
-	
-	
 		osThreadNew(tBrain, NULL, NULL);
 	  brainQ = osMessageQueueNew(MSG_COUNT,sizeof(uint8_t),NULL);
 	
 	  osThreadNew(tAudio,NULL,NULL);
 	  audioQ = osMessageQueueNew(MSG_COUNT,sizeof(uint8_t),NULL);
-	  //startAudioQ = osMessageQueueNew(MSG_COUNT,sizeof(packet),NULL);
 	
-/*
+
 		osThreadNew(redThread, NULL, NULL);
 		redQ = osMessageQueueNew(MSG_COUNT,sizeof(packet),NULL);
-*/
+
 		osThreadNew(greenThread, NULL, NULL);	
 		greenQ = osMessageQueueNew(MSG_COUNT,sizeof(uint8_t),NULL);
 		
@@ -337,12 +341,7 @@ int main (void) {
 		osThreadNew(tMotorControl, NULL, NULL);
 	  motorQ = osMessageQueueNew(MSG_COUNT, sizeof(uint8_t), NULL);
 	
-	
-	
 
-	
-	
-	
 
   osKernelStart();      
   for (;;) {}
