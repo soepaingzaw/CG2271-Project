@@ -6,17 +6,6 @@
 #include "stdio.h"
 #include "time.h"
 
-/*
-
-#include "MKL25Z4.h"                    // Device header
-#define BAUD_RATE 9600
-#define UART_RX_PORTE23 23
-#define UART2_INT_PRIO 128	
-
-*/
-
-
-
 #define MASK(x) (1 << (x))
 
 #define PTB3 3
@@ -26,23 +15,6 @@
 #define PTB0 0
 #define PTA12 12
 
-
-/*
-#define NUM_NOTES 30
-
-#define RED_LED 18 // PortB Pin 18
-#define GREEN_LED 19 // PortB Pin 19
-#define BLUE_LED 1 // PortD Pin 1
-
-#define LED_RED 3
-#define LED_MASK(x) (x&0x06)
-#define BIT0_MASK(x) (x&0x01)
-
-#define RED_LED_MASK(x) (x&0x03)
-
-#define RED_LED_OFF 2
-
-*/
 
 #define MOTOR_MASK(x) (x&0x08)
 #define DIRECTION_MASK(x) (x&0x04)
@@ -56,7 +28,6 @@
 #define STATE_MASK(x) ((x&0x0E)>> 1)
 
 
-
 #define FW 11
 #define RV 9
 #define LT 13
@@ -64,12 +35,7 @@
 
 
 
-
-
-
 void initMotorPWM(void) {
-	//ENABLE POWER TO PWM
-	//SIM->SCGC6 |= (SIM_SCGC6_TPM1_MASK)|(SIM_SCGC6_TPM2_MASK);
 	
 	//Choose PWM type
 	SIM->SOPT2 &= ~SIM_SOPT2_TPMSRC_MASK;
@@ -101,47 +67,10 @@ void initMotorPWM(void) {
 }
 
 unsigned int counter = 0;
-/*
-typedef enum colours {
-	red_led = RED_LED,
-	green_led = GREEN_LED, 
-	blue_led = BLUE_LED
-} colours_t;
-	
-char led_colours[3][2] = {{0,red_led}, {1,green_led}, {2,blue_led}};
-*/
-
-
-
-
-
-
-
-
-
-
-/* GPIO initialization function */
-
-
-
-
 
 
 
 void initMotorGPIO(void) {
-
-	// Enable Clock to PORTB and PORTD
-	//SIM->SCGC5 |= ((SIM_SCGC5_PORTB_MASK) | (SIM_SCGC5_PORTD_MASK));
-
-	// Configure MUX settings to make all 3 pins GPIO
-	/*
-	PORTB->PCR[RED_LED] &= ~PORT_PCR_MUX_MASK;
-	PORTB->PCR[RED_LED] |= PORT_PCR_MUX(1);
-	PORTB->PCR[GREEN_LED] &= ~PORT_PCR_MUX_MASK;
-	PORTB->PCR[GREEN_LED] |= PORT_PCR_MUX(1);
-	PORTD->PCR[BLUE_LED] &= ~PORT_PCR_MUX_MASK;
-	PORTD->PCR[BLUE_LED] |= PORT_PCR_MUX(1);
-	*/
 	
 	//initilaize motors
   PORTB->PCR[PTB1] &= ~PORT_PCR_MUX_MASK;
@@ -154,7 +83,6 @@ void initMotorGPIO(void) {
 	PORTB->PCR[PTB2] &= ~PORT_PCR_MUX_MASK;
   PORTB->PCR[PTB2] |= PORT_PCR_MUX(3);//TPM2CH0
 	
-	
 
 // Set Data Direction Registers for PortB and PortD
 //motors
@@ -163,63 +91,8 @@ void initMotorGPIO(void) {
 	
 	PTB->PDDR |= (MASK(PTB3));
 	PTB->PDDR |= (MASK(PTB2));
-	
-	
-	
-	// Set Data Direction Registers for PortB and PortD
-	//PTB->PDDR |= (MASK(RED_LED) | MASK(GREEN_LED));
-	//PTD->PDDR |= MASK(BLUE_LED);
 
 }
-
-//switch of the LED
-/*
-void offLED(void) {
-	PTB->PSOR = MASK(RED_LED) | MASK(GREEN_LED); //since LED is active low
-	PTD->PSOR = MASK(BLUE_LED);
-}
-*/
-
-//high-level library function
-//takes in colour and controls appropriate LED
-
-/*
-void led_control(colours_t colour) {
-	offLED();
-	switch(colour) {
-		case red_led:
-			PTB->PCOR = MASK(RED_LED);
-			break;
-		case green_led:
-			PTB->PCOR = MASK(GREEN_LED);
-			break;
-		case blue_led:
-			PTD->PCOR = MASK(BLUE_LED);
-			break;
-		default:
-			offLED();
-	}
-}
-
-
-*/
-
-
-
-
-
-
-
-
-
-/* DELAY ROUTINE*/
-
-
-
-
-
-
-
 
 void forward(void) {
 	TPM1->MOD = 375000;
@@ -282,9 +155,12 @@ void right(void) {
 
 	osDelay(100);
 
-
-	
 }
+
+
+
+
+
 
 void leftReverse(void){
 	TPM1->MOD = 375000;
@@ -327,15 +203,8 @@ void sharpLeft(){
 		TPM1_C0V = 375000/2;
 		TPM2_C1V = 0;//NO CHANGE
 
-		osDelay(100);
-		/*
-		TPM1->MOD = 0;
-		TPM2->MOD = 0;
-		
-		TPM1_C0V = 0;
-		TPM2_C0V = 0;
+		osDelay(50);
 
-		*/
 }
 
 void sharpRight() {
@@ -348,14 +217,7 @@ void sharpRight() {
 	TPM1_C0V = 0;//no chnage
 	TPM2_C1V = 375000/2;
 	
-	osDelay(100);
-	/*
-	TPM1->MOD = 0;
-	TPM2->MOD = 0;
-	
-	TPM1_C1V = 0;
-	TPM2_C1V = 0;
-	*/
+	osDelay(50);
 
 }
 
@@ -442,44 +304,189 @@ void hardCodeChallenge2(void) {
 
 	osDelay(50);
 }
+///////////////////////////////////////////////////
 
-/*
+void leftSharp(int ms){
+		TPM1->MOD = 375000;		
+	  TPM2->MOD = 375000;
+
+		TPM1_C1V = 0;
+		TPM2_C0V = 375000/2;//
+		
+		TPM1_C0V = 375000/2;
+		TPM2_C1V = 0;//NO CHANGE
+
+		osDelay(ms);
+
+}
+
+void rightSharp(int ms) {
+	TPM1->MOD = 375000;
+	TPM2->MOD = 375000;
+		
+	TPM1_C1V = 375000/2;//no change
+	TPM2_C0V = 0;//added code
+	
+	TPM1_C0V = 0;//no chnage
+	TPM2_C1V = 375000/2;
+	
+	osDelay(ms);
+
+}
+
+void rightCircle(int ms) {
+	TPM1->MOD = 375000;		
+	TPM2->MOD = 375000;
+	
+	TPM1_C1V = 375000/4;
+	TPM2_C0V = 0;//added code
+	
+	TPM1_C0V = 375000;//added code
+	TPM2_C1V = 375000;
+
+
+
+	osDelay(ms);
+
+}
+
+
+void fw(int ms) {
+	TPM1->MOD = 375000;
+	TPM2->MOD = 375000;
+	
+
+	TPM1_C0V = 375000/3;//added code
+	TPM2_C1V = 375000/3;
+	
+	TPM2_C0V = 0;//added code
+	TPM1_C1V = 0;
+	
+	osDelay(ms);
+
+}
+
+void fws(int ms) {
+	TPM1->MOD = 375000;
+	TPM2->MOD = 375000;
+	
+
+	TPM1_C0V = 375000/4;//added code
+	TPM2_C1V = 375000/4;
+	
+	TPM2_C0V = 0;//added code
+	TPM1_C1V = 0;
+	
+	osDelay(ms);
+
+}
+
+
+
+void rv(int ms) {
+
+
+	TPM1->MOD = 375000;
+	TPM2->MOD = 375000;
+	
+	TPM1_C1V = 375000/4;
+	TPM2_C0V = 375000/4; //added code
+	
+	TPM1_C0V = 0;//added code
+	TPM2_C1V = 0;
+
+
+  osDelay(ms);
+	
+		TPM1->MOD = 375000;
+	TPM2->MOD = 375000;
+	
+	TPM1_C1V = 375000;
+	TPM2_C0V = 375000; //added code
+	
+	TPM1_C0V = 0;//added code
+	TPM2_C1V = 0;
+	
+}
+int l = 380;
+int r = 380;
+int fullForward = 750;
+int halfForward = 500;
+
 void selfDriving(void){
-	
-	forward();
+		
+	  fw(1);
 	//implement! with osDleay inside once in task/thread
-	while(!wallDetect());
-  //set button on the app so that rxdata to that LED will off
-//when release isit permenantly that butoon?
-
-	offMotors();
-osDelay(1000);
+		sensor();
 	
-	sharpLeft();
-	osDelay(1000);
+		//rv(50);
+	  //offMotors();
 
-
+		leftSharp(l);//leftSharp(500);
 	
-	circularMotion();
-	//hardcode when to stop
-	osDelay(8000);
-	
-	//keep changing rxdata for the sounds
 		offMotors();
-osDelay(1000);
+		osDelay(1000);
 	
 	
-	sharpLeft();
-	osDelay(1000);	
+	  rightCircle(5000);
 	
-	forward();
-	//implement! with osDleay inside once in task/thread
-	while(!wallDetect());
-	offMotors();	
+		offMotors();
+		osDelay(1000);
+	/*
+			
+		fw(halfForward);	
+		offMotors();
+		osDelay(1000);
+	
+		//bottom left
+		rightSharp(r);//rightSharp(500);
+		offMotors();
+		osDelay(1000);
+			
+		fw(fullForward);	
+		offMotors();
+		osDelay(1000);
+		
+		//top left
+		rightSharp(r);
+		offMotors();
+		osDelay(1000);
+		
+		fw(fullForward);	
+		offMotors();
+		osDelay(1000);
+		//top right
+		rightSharp(r);
+		offMotors();
+		osDelay(1000);
+		
+		fw(fullForward);	
+		offMotors();
+		osDelay(1000);
+		
+		//bottom right
+		rightSharp(r);
+		offMotors();
+		osDelay(1000);
+		
+		fw(halfForward);	
+		offMotors();
+		osDelay(1000);
+		*/
+		
+		leftSharp(l);
+		//osDelay(500);
+		offMotors();
+		osDelay(1000);
+		
+		fw(1);
+		sensor();
+		//rv(50);
+	  //offMotors();
+		
 	
 	
 }
-*/
 
 
 

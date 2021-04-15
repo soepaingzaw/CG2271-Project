@@ -21,39 +21,17 @@
 #define MOTOR_MODE_MASK(x) (x&0x10)
 #define ENABLE_MASK(x) (x&0x01)
 
-osThreadId_t t_Brain, t_Audio , red_Thread,green_Thread, t_MotorControl; 
+osThreadId_t t_Brain, t_Audio, red_Thread, green_Thread, t_MotorControl; 
 
 osMessageQueueId_t audioQ,brainQ,redQ,greenQ,motorQ;
 
-osEventFlagsId_t led_flag;
+
+volatile int flag = 1; 
 
 volatile uint8_t rx_data = 0x00;
 
 volatile int audioFlag = 0;
 
-typedef struct {
-	uint8_t cmd;
-	uint8_t data;
-	
-} packet;
-
-/*
-void initGPIO(void)
-{
-// Enable Clock to PORTB and PORTD
-SIM->SCGC5 |= ((SIM_SCGC5_PORTB_MASK) | (SIM_SCGC5_PORTD_MASK));
-// Configure MUX settings to make all 3 pins GPIO
-PORTB->PCR[RED_LED] &= ~PORT_PCR_MUX_MASK;
-PORTB->PCR[RED_LED] |= PORT_PCR_MUX(1);
-PORTB->PCR[GREEN_LED] &= ~PORT_PCR_MUX_MASK;
-PORTB->PCR[GREEN_LED] |= PORT_PCR_MUX(1);
-PORTD->PCR[BLUE_LED] &= ~PORT_PCR_MUX_MASK;
-PORTD->PCR[BLUE_LED] |= PORT_PCR_MUX(1);
-// Set Data Direction Registers for PortB and PortD
-PTB->PDDR |= (MASK(RED_LED) | MASK(GREEN_LED));
-PTD->PDDR |= MASK(BLUE_LED);
-}
-*/
 
 void initClockGate() {
 	// Enable Clock Gating for PORTB and PORTE
@@ -91,22 +69,6 @@ void initUART2(uint32_t baud_rate){
 
 }
 
-void initSwitch(void) {
-
-  PORTD->PCR[DPIN6] &= ~PORT_PCR_MUX_MASK;
-  PORTD->PCR[DPIN6] |= (PORT_PCR_MUX(1)|PORT_PCR_PS_MASK|
-	PORT_PCR_PE_MASK|PORT_PCR_IRQC(0x0a));
-// Set Data Direction Registers for PortB and PortD
-
-  PTD->PDDR &= ~MASK(DPIN6);
-	
-	NVIC_SetPriority(PORTD_IRQn,0);
-	NVIC_ClearPendingIRQ(PORTD_IRQn);
-	NVIC_EnableIRQ(PORTD_IRQn);
-	
-
-	
-}
 
 void delay(volatile uint32_t nof) {
 		while (nof!=0) {
@@ -142,10 +104,15 @@ void UART2_IRQHandler(void) {
 		}
 		//press end challenge to play end music
 		//end stop playing song
-		if(rx_data == 0x23) {
+		else if(rx_data == 0x23) {
 			
+			offMotors();
 			audioFlag = 0;
 			finishRun();
+		}
+		
+		else if(rx_data==0x25){
+			flag = 1;
 		}
 	
 	} 
@@ -154,18 +121,6 @@ void UART2_IRQHandler(void) {
 	
 }
 
-
-
-
-void PORTD_IRQHandler() {
-	NVIC_ClearPendingIRQ(PORTD_IRQn);
-	delay(0x100000);
-	//osSemaphoreRelease(mySem);
-	
-	PORTD->ISFR |= MASK(DPIN6);
-	
-	
-}
 
 void tMotorControl() {
 	
@@ -201,7 +156,13 @@ void tMotorControl() {
 				rightReverse();
 		}
 		
-
+		else if(rx_m==0x51) {
+			//hardCodeChallenge2();
+				if(flag){
+					selfDriving();
+					flag=0;
+				}
+		}
 		
 		else if(rx_m==0x10) {
 			offMotors();
@@ -315,6 +276,7 @@ int main (void) {
 		//integrating motors
 	  initMotorGPIO();
 	  initMotorPWM();
+	  initUltraSound();
 	
 		//initSwitch();
 
@@ -331,7 +293,7 @@ int main (void) {
 	
 
 		osThreadNew(redThread, NULL, NULL);
-		redQ = osMessageQueueNew(MSG_COUNT,sizeof(packet),NULL);
+		redQ = osMessageQueueNew(MSG_COUNT,sizeof(uint8_t),NULL);
 
 		osThreadNew(greenThread, NULL, NULL);	
 		greenQ = osMessageQueueNew(MSG_COUNT,sizeof(uint8_t),NULL);
