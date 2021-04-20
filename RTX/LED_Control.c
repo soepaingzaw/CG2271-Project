@@ -1,35 +1,10 @@
-
-#include "RTE_Components.h"
-#include  CMSIS_device_header
-#include "cmsis_os2.h"
- 
- #define RED_LED 5 //PORTD 5
- #define GREEN_LEDA 1 // PORTA
- #define GREEN_LEDB 2 // PORTA
- #define GREEN_LEDC 4 // PORTD
- #define GREEN_LEDD 12 // PORTA
- #define GREEN_LEDE 4 // PORTA
- #define GREEN_LEDF 5 // PORTA
- #define GREEN_LEDG 8 // PORTC
- #define GREEN_LEDH 9 // PORTC
- #define GREEN_LEDI 7 // PORTC
- #define GREEN_LEDJ 0 // PORTC
- #define MASK(x) (1 << (x))
- #define RED_MOVE_DELAY 500
- #define RED_STOP_DELAY 250
- #define GREEN_DELAY 100
- 
- unsigned int moving = 0;
+#include "tLED.h"
  
  void initLED(void){
 	// Enable Clock to PORTA and PORTC and PORTD
-	SIM->SCGC5 |= ((SIM_SCGC5_PORTA_MASK) | (SIM_SCGC5_PORTC_MASK) | (SIM_SCGC5_PORTD_MASK));
-	// Configure MUX settings to make all 3 pins GPIO
 	PORTD->PCR[RED_LED] &= ~PORT_PCR_MUX_MASK;
 	PORTD->PCR[RED_LED] |= PORT_PCR_MUX(1);
 	PTD->PDDR |= MASK(RED_LED);
-	 
-	 
 	 
 	PORTA->PCR[GREEN_LEDA] &= ~PORT_PCR_MUX_MASK;
 	PORTA->PCR[GREEN_LEDA] |= PORT_PCR_MUX(1);

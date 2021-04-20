@@ -5,37 +5,36 @@
 #include "MKL25Z4.H"
 #include "stdio.h"
 #include "time.h"
-#define RED_LED 18 // PortB Pin 18
-#define GREEN_LED 19 // PortB Pin 19
-#define BLUE_LED 1 // PortD Pin 1
+
+#include "tMotor.h"
+#include "tAudio.h"
+#include "tLED.h"
+
+#define START 0x21
+#define END 0x23
+#define RESET 0x25
+#define CLEARFLAGS 0xFFFFFFFF
+
 #define MASK(x) (1 << (x))
 
 #define UART_RX_PORTE23 23
 #define BAUD_RATE 9600
 
-#define DPIN6 6
-
 #define MSG_COUNT 1
 
-#define MOTORONMASK(x) (x&0x01)
-#define MOTOR_MODE_MASK(x) (x&0x10)
-#define ENABLE_MASK(x) (x&0x01)
-
 osThreadId_t t_Brain, t_Audio, red_Thread, green_Thread, t_MotorControl; 
-
 osMessageQueueId_t audioQ,brainQ,redQ,greenQ,motorQ;
-
 
 volatile int flag = 1; 
 
-volatile uint8_t rx_data = 0x00;
+uint8_t rx_data = 0x00;//disable all tasks initially
 
 volatile int audioFlag = 0;
 
 
 void initClockGate() {
-	// Enable Clock Gating for PORTB and PORTE
-	SIM->SCGC5 |= (SIM_SCGC5_PORTB_MASK) | (SIM_SCGC5_PORTE_MASK) | (SIM_SCGC5_PORTA_MASK) | (SIM_SCGC5_PORTD_MASK);
+	// Enable Clock Gating for GPIO
+	SIM->SCGC5 |= (SIM_SCGC5_PORTB_MASK) | (SIM_SCGC5_PORTE_MASK) | (SIM_SCGC5_PORTA_MASK) | (SIM_SCGC5_PORTD_MASK)|(SIM_SCGC5_PORTC_MASK);
 	// Enable Clock Gating for UART2
 	SIM->SCGC4 |= SIM_SCGC4_UART2_MASK;
 		//Enable clock gating for Timer0, Timer 1 and Timer 2
@@ -46,7 +45,6 @@ void initUART2(uint32_t baud_rate){
 	
 	uint32_t divisor, bus_clock;
 
-	
 	PORTE-> PCR[UART_RX_PORTE23] &= ~PORT_PCR_MUX_MASK;
 	PORTE-> PCR[UART_RX_PORTE23] |= PORT_PCR_MUX(4);
 	
@@ -69,169 +67,118 @@ void initUART2(uint32_t baud_rate){
 
 }
 
-
-void delay(volatile uint32_t nof) {
-		while (nof!=0) {
-			//__ASM("NOP");
-			nof--;
-		}
-		
-}
-
-void offRGB(void) {
-		PTB->PSOR = MASK(RED_LED);
-		
-		PTB->PSOR = MASK(GREEN_LED);
-		PTD->PSOR = MASK(BLUE_LED);
-}
-
 void UART2_IRQHandler(void) {
 	
 	NVIC_ClearPendingIRQ(UART2_IRQn);
-	
-	//delay(0x100000);
+
 	if (UART2->S1 & UART_S1_RDRF_MASK) {
-	// received a character
-		rx_data = UART2->D;// remove transmit functionality
-		//osMessageQueuePut(tBrain,&rx_data,NULL,0);
-		
-		
-		if(rx_data == 0x21){
-			//greenOn();
-			//osMessageQueuePut(audioQ, &rx_data, NULL, 0);
+	  // received a character
+		rx_data = UART2->D;
+
+		if(rx_data == START){
 			bluetoothConnected();
 			audioFlag = 1;
 		}
 		//press end challenge to play end music
 		//end stop playing song
-		else if(rx_data == 0x23) {
-			
+		else if(rx_data == END) {			
 			offMotors();
 			audioFlag = 0;
 			finishRun();
 		}
-		
-		else if(rx_data==0x25){
+		//reset flag to enable self driving mode to run again
+		else if(rx_data== RESET){
 			flag = 1;
 		}
-	
 	} 
-	
-	PORTD->ISFR = 0xffffffff;
-	
+	PORTE->ISFR = CLEARFLAGS;
 }
 
-
-void tMotorControl() {
+void tMotorControl(void *argument) {
 	
 	uint8_t rx_m;	
 	
 	for(;;) {
 		osMessageQueueGet(motorQ,&rx_m,NULL,osWaitForever);
-		if(rx_m==0x11){
-			forward();
+		if(rx_m==FORWARD){
+			fw(1);
 		}
-		else if(rx_m==0x13){
-			backward();
+		else if(rx_m==REVERSE){
+			rv(1);
 		}
-		else if(rx_m==0x15) {
-			left();
+		else if(rx_m==LEFTFORWARD) {
+			leftForward(1);		
 		}
-		else if(rx_m==0x17) {
+		else if(rx_m==RIGHTFORWARD) {
 		
-			right();
+			rightForward(1);
 		}
-		else if(rx_m==0x1B) {
-		
-			sharpRight();
+		else if(rx_m==ROTATERIGHT) {	
+			rightSharp(1);
 		}
-		else if(rx_m==0x19) {
-		
-			sharpLeft();
+		else if(rx_m==ROTATELEFT) {		
+			leftSharp(1);
 		}
-		else if(rx_m==0x1D){
-			leftReverse();
+		else if(rx_m==LEFTREVERSE){
+			leftReverse(1);
 		}
-		else if(rx_m==0x1F){
-				rightReverse();
+		else if(rx_m==RIGHTREVERSE){
+				rightReverse(1);
 		}
 		
-		else if(rx_m==0x51) {
-			//hardCodeChallenge2();
+		else if(rx_m==SELFDRIVING) {
 				if(flag){
 					selfDriving();
 					flag=0;
 				}
-		}
-		
-		else if(rx_m==0x10) {
+		}		
+		else if(rx_m==OFFMOTORS) {
 			offMotors();
-		}
-		
+		}	
 	}
-	
 }
 
 
-void greenThread() {
+void greenThread(void *argument) {
 	uint8_t rx_g;	
 	
-	for(;;) {
-		
+	for(;;) {		
 		osMessageQueueGet(greenQ,&rx_g,NULL,osWaitForever);
-		if(rx_g==0x21){
+		if(rx_g==START){
+			//everytime connected turn motor off
 			greenLEDBluetoothOn();
-			rx_data=0x10;
+			rx_data=OFFMOTORS;
 		}
-		//else if(MOTOR_MODE_MASK(rx_g)){
 		else if(ENABLE_MASK(rx_g)){
 				offGreen();
 				movingGreen();
-			
-			//}
-
 		}
 		else{
-			onGreen();
-		
+			onGreen();	
 		}
-		
 	}
-	
 }
 
-
-void redThread() {
+void redThread(void *argument) {
 	uint8_t rx_r;	
 	
 	for(;;) {
 		
 		osMessageQueueGet(redQ,&rx_r,NULL,osWaitForever);
-
-		//if(MOTOR_MODE_MASK(rx_r)){
-		if(ENABLE_MASK(rx_r)){
-			
+		if(ENABLE_MASK(rx_r)){		
 				movingRed();
-			
-			//}
-
 		}
 		else{
-			stationaryRed();
-		
+			stationaryRed();	
 		}
-	}
-	
-	
+	}	
 }
 
-
-void tAudio() {
+void tAudio(void *argument) {
 	
 	uint8_t rx_a;
 	
 	int internalFlag = 1;
-	
 	
 	for(;;){
 		osMessageQueueGet(audioQ,&rx_a,NULL,osWaitForever);
@@ -240,14 +187,11 @@ void tAudio() {
 			//1 second delay before song starts
 			if(internalFlag) {
 				osDelay(2000);
-				internalFlag=0;
+				internalFlag = 0;
 			}
-			maryHadALittleLamb(audioFlag);
-		}
-		
-		
+			maryHadALittleLamb();
+		}	
 	}
-	
 }
 
 void tBrain(void *argument) {
@@ -266,24 +210,16 @@ int main (void) {
  
     SystemCoreClockUpdate();
 	
-		//correct code for bluetooth and audio
 	  initClockGate();
 	  initUART2(BAUD_RATE);
 	  initAudio();
-	  initPWM();
+	  initAudioPWM();
 		initLED();
-	
-		//integrating motors
-	  initMotorGPIO();
+	  initMotor();
 	  initMotorPWM();
 	  initUltraSound();
-	
-		//initSwitch();
-
-		offRGB();
 		
     osKernelInitialize();   
-
 	
 		osThreadNew(tBrain, NULL, NULL);
 	  brainQ = osMessageQueueNew(MSG_COUNT,sizeof(uint8_t),NULL);
@@ -291,19 +227,14 @@ int main (void) {
 	  osThreadNew(tAudio,NULL,NULL);
 	  audioQ = osMessageQueueNew(MSG_COUNT,sizeof(uint8_t),NULL);
 	
-
 		osThreadNew(redThread, NULL, NULL);
 		redQ = osMessageQueueNew(MSG_COUNT,sizeof(uint8_t),NULL);
 
 		osThreadNew(greenThread, NULL, NULL);	
 		greenQ = osMessageQueueNew(MSG_COUNT,sizeof(uint8_t),NULL);
-		
-		
-		
+				
 		osThreadNew(tMotorControl, NULL, NULL);
 	  motorQ = osMessageQueueNew(MSG_COUNT, sizeof(uint8_t), NULL);
-	
-
 
   osKernelStart();      
   for (;;) {}
