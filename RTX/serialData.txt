@@ -1,7 +1,5 @@
-press end challebeg to play end music 
-
-Thread      |hex        |Binary      |decimal     |comments
-red led:     0x01        0000 0001    1            -> may need to change
+State       |hex        |Binary      |decimal   
+off          0x00        0000 0000    00
 
 forward:     0x11        0001 0001    17
 reverse:     0x13        0001 0011    19
@@ -12,13 +10,13 @@ sharp left   0x19        0001 1001    25
 sharp right  0x1B        0001 1011    27
 left rcurve  0x1D        0001 1101    29
 right rcurve 0x1F        0001 1111    31
+
 challenge    0x51        0101 0001    81 
 
+bluetooth    0x20        0010 0000    32
+ending       0x22        0010 0010    34
 
-bluetooth    0x21        0010 0001    33
-ending       0x23        0010 0011    35
-reset        0x25        0010 0101    37
 
-//YET TO IMPLEMENT
+
 
 

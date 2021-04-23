@@ -1,12 +1,14 @@
 #include "tAudio.h"
 
+/* INITIALISE AUDIO COMPONENTS */
 void initAudio(void) {
 	PORTD->PCR[PTD0] &= ~PORT_PCR_MUX_MASK;
   PORTD->PCR[PTD0] |= PORT_PCR_MUX(4);
-// Set Data Direction Registers for  PortD
+
   PTD->PDDR |= (MASK(PTD0));
 }
 
+/* INITIALISE COUNTERS FOR AUDIO COMPONENTS */
 void initAudioPWM(void) {
 	
 	SIM->SOPT2 &= ~SIM_SOPT2_TPMSRC_MASK;
@@ -23,59 +25,56 @@ void initAudioPWM(void) {
 	TPM0_C0V = 0;	
 }
 
-
-void maryHadALittleLamb() {
+/* NURSERY RHYME MARY HAD A LITTLE LAMB */
+void maryHadALittleLamb(uint8_t *rx_a) {
 	
-	    int temp=375000;
-	
-	    int mary[30] = {330,294,262,294,330,330,330,  
-											0,294,294,294,0,330,330,330,0,
-											330,294,262,294,330,330,330,  
-											0,294,294,330,294,262,0};	
-	
-			for(int i=0;i<NUM_NOTES;i++) {
-	
-			TPM0->MOD = temp/mary[i];
-			TPM0_C0V = (temp/(mary[i]))/2;
-			osDelay(100);
-				
-			TPM0->MOD = 0;
-			TPM0_C0V = 0;		
-			osDelay(100);
+	int mary[NUM_NOTES_SONG] = {NOTE_E,NOTE_D,NOTE_C,NOTE_D,NOTE_E,NOTE_E,NOTE_E,  
+										NOTE_REST,NOTE_D,NOTE_D,NOTE_D,NOTE_REST,NOTE_E,NOTE_E,NOTE_E,NOTE_REST,
+										NOTE_E,NOTE_D,NOTE_C,NOTE_D,NOTE_E,NOTE_E,NOTE_E,  
+										NOTE_REST,NOTE_D,NOTE_D,NOTE_E,NOTE_D,NOTE_C,NOTE_REST};	
 
-		}
+	for(int i=0;i<NUM_NOTES_SONG&&(*rx_a)!=END;i++) {
 
-}
-
-void bluetoothConnected(void) {
-			int temp =375000;
-			int start[3] = {330,294,262};	
+		TPM0->MOD = COUNTERFREQUENCY/mary[i];
+		TPM0_C0V = (COUNTERFREQUENCY/(mary[i]))/2;
+		osDelay(SONGDELAY);
 			
-			for(int i=0;i<3;i++){
-				TPM0->MOD = temp/start[i];
-				TPM0_C0V = (temp/(start[i]))/2;
-				delay(0x80000);
-				TPM0->MOD = 0;
-				TPM0_C0V = 0;		
-				delay(0x80000);
-			}	
+		TPM0->MOD = 0;
+		TPM0_C0V = 0;		
+		osDelay(SONGDELAY);
+	}
 }
 
-void finishRun(void) {
-	int temp = 375000;
-	int finish[8] = {262,262,262,330,392,0,330,392};	
-	uint32_t  time[8] = {0x80000,0x80000,0x80000,0x80000,0xC0000,0x80000,0x80000,0x180000};
+
+//Plays Mi Re Do (Do Re Mi in reverse) tune 
+//upon successful connection with bluetooth
+void bluetoothConnected(void) {
+
+	int start[NUM_NOTES_START] = {NOTE_E,NOTE_D,NOTE_C};	
 	
-	for(int i=0;i<8;i++){
-			TPM0->MOD = temp/finish[i];
-			TPM0_C0V = (temp/(finish[i]))/2;
-			delay(time[i]);
-			TPM0->MOD = 0;
-			TPM0_C0V = 0;		
-			delay(0x100000);
-					
+	for(int i=0;i<NUM_NOTES_START;i++){
+		TPM0->MOD = COUNTERFREQUENCY/start[i];
+		TPM0_C0V = (COUNTERFREQUENCY/(start[i]))/2;
+		osDelay(STARTDELAY);
+		TPM0->MOD = 0;
+		TPM0_C0V = 0;		
+		osDelay(STARTDELAY);
+	}	
+}
+
+/*Plays an old school Nintendo tune when the player finishes a challenge */
+void finishRun(uint8_t *rx_a) {
+
+	int finish[NUM_NOTES_END] = {NOTE_C,NOTE_C,NOTE_C,NOTE_E,NOTE_G,NOTE_REST,NOTE_E,NOTE_G};	
+	uint32_t  time[NUM_NOTES_END] = {SHORTPAUSE,SHORTPAUSE,SHORTPAUSE,SHORTPAUSE,MEDPAUSE ,SHORTPAUSE,SHORTPAUSE,LONGPAUSE};
+	
+	for(int i=0;i<NUM_NOTES_END && (*rx_a)==END;i++){
+		TPM0->MOD = COUNTERFREQUENCY/finish[i];
+		TPM0_C0V = (COUNTERFREQUENCY/(finish[i]))/2;
+		osDelay(time[i]);
+		TPM0->MOD = 0;
+		TPM0_C0V = 0;		
+		osDelay(ENDDELAY);		
 	}
-	delay(0xFFFFFFFF);
-	
 }
 
